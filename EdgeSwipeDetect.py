@@ -14,6 +14,8 @@ class EdgeSwipeDetect:
         self.dev = None
         self.running = False
 
+        self.touching = 0
+
         self.last_x = -1
         self.last_y = -1
 
@@ -24,11 +26,13 @@ class EdgeSwipeDetect:
         self.handlingTop = self.handlingBottom = False
 
         print("getting device")
+        de = None
         for d in evdev.list_devices():
             de = InputDevice(d)
-            if de.name.rfind("Finger") > 0:
-                self.dev = de
+            searchTerm = len(argv) > 1 and argv[1] or "finger"
+            if de.name.lower().rfind(searchTerm) > 0:
                 break
+        self.dev = de
 
         print("device: ", self.dev)
         if self.dev:
@@ -47,7 +51,7 @@ class EdgeSwipeDetect:
 
         self.running = True
         while self.running:
-            r, w, x = select([self.dev.fd], [], [], 0.05)
+            r, w, x = select([self.dev.fd], [], [], 1)
             if r:
                 if not self.running:
                     break
@@ -56,6 +60,12 @@ class EdgeSwipeDetect:
                         self.handleXChange(event.value)
                     elif event.code == ecodes.ABS_MT_POSITION_Y:
                         self.handleYChange(event.value)
+
+                    elif event.code == ecodes.BTN_TOUCH:
+                        self.touching = event.value
+                        if not self.touching:  # oh my
+                            self.handlingLeft = self.handlingRight = False
+                            self.handlingTop = self.handlingBottom = False
 
     def handleXChange(self, x):
         if x == 0:
@@ -72,24 +82,28 @@ class EdgeSwipeDetect:
 
     def handleYChange(self, y):
         if y == 0:
-            self.handleTopEdge(y)
+            print("top")
+            self.handlingTop = True
         elif y == self.max_y:
+            print("bottom")
+            self.handlingBottom = True
+
+        if self.handlingTop:
+            self.handleTopEdge(y)
+        if self.handlingBottom:
             self.handleBottomEdge(y)
 
     def handleLeftEdge(self, x):
-            print(x)
-            # self.handlingLeft = False
+        print("l%d" % (x))
 
-    def handleTopEdge(self, x):
-        print("top")
-        self.handlingTop = True
+    def handleRightEdge(self, x):
+        print("r%d" % (self.max_x - x))
 
-    def handleRightEdge(self, y):
-        pass
+    def handleTopEdge(self, y):
+        print("t%d" % (y))
 
     def handleBottomEdge(self, y):
-        print("bottom")
-        self.handlingBottom = True
+        print("b%d" % (self.max_y - y))
 
 
 def main():
