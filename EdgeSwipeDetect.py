@@ -22,17 +22,14 @@ class EdgeSwipeDetect:
         self.max_x = -1
         self.max_y = -1
 
-        self.handlingLeft = self.handlingRight = False
-        self.handlingTop = self.handlingBottom = False
+        self.handling = ""
 
-        print("getting device")
-        de = None
         for d in evdev.list_devices():
             de = InputDevice(d)
             searchTerm = len(argv) > 1 and argv[1] or "finger"
             if de.name.lower().rfind(searchTerm) > 0:
+                self.dev = de
                 break
-        self.dev = de
 
         print("device: ", self.dev)
         if self.dev:
@@ -63,34 +60,34 @@ class EdgeSwipeDetect:
 
                     elif event.code == ecodes.BTN_TOUCH:
                         self.touching = event.value
-                        if not self.touching:  # oh my
-                            self.handlingLeft = self.handlingRight = False
-                            self.handlingTop = self.handlingBottom = False
+                        if self.handling and not self.touching:  # oh my
+                            self.handling = ""
+                            print("end")
 
     def handleXChange(self, x):
-        if x == 0:
+        if x == 0 and not self.handling:
             print("left")
-            self.handlingLeft = True
-        elif x == self.max_x:
+            self.handling = "left"
+        elif x == self.max_x and not self.handling:
             print("right")
-            self.handlingRight = True
+            self.handling = "right"
 
-        if self.handlingLeft:
+        if self.handling == "left":
             self.handleLeftEdge(x)
-        if self.handlingRight:
+        if self.handling == "right":
             self.handleRightEdge(x)
 
     def handleYChange(self, y):
-        if y == 0:
+        if y == 0 and not self.handling:
             print("top")
-            self.handlingTop = True
-        elif y == self.max_y:
+            self.handling = "top"
+        elif y == self.max_y and not self.handling:
             print("bottom")
-            self.handlingBottom = True
+            self.handling = "bottom"
 
-        if self.handlingTop:
+        if self.handling == "top":
             self.handleTopEdge(y)
-        if self.handlingBottom:
+        if self.handling == "bottom":
             self.handleBottomEdge(y)
 
     def handleLeftEdge(self, x):
