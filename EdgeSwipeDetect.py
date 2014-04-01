@@ -31,7 +31,7 @@ class EdgeSwipeDetect:
                 self.dev = de
                 break
 
-        print("device: ", self.dev)
+        print("device: ", self.dev, file=sys.stderr)
         if self.dev:
             for cap in self.dev.capabilities()[ecodes.EV_ABS]:
                 if cap[0] == ecodes.ABS_MT_POSITION_X:
@@ -39,8 +39,8 @@ class EdgeSwipeDetect:
                 elif cap[0] == ecodes.ABS_MT_POSITION_Y:
                     self.max_y = cap[1].max
 
-            print("max x: ", self.max_x)
-            print("max y: ", self.max_y)
+            print("max x: ", self.max_x, file=sys.stderr)
+            print("max y: ", self.max_y, file=sys.stderr)
 
     def run(self):
         if not self.dev:
@@ -63,6 +63,7 @@ class EdgeSwipeDetect:
                         if self.handling and not self.touching:  # oh my
                             self.handling = ""
                             print("end")
+                    sys.stdout.flush()
 
     def handleXChange(self, x):
         if x == 0 and not self.handling:
@@ -91,16 +92,16 @@ class EdgeSwipeDetect:
             self.handleBottomEdge(y)
 
     def handleLeftEdge(self, x):
-        print("l%d" % (x))
+        print("l%d" % (x / self.max_x * 100))
 
     def handleRightEdge(self, x):
-        print("r%d" % (self.max_x - x))
+        print("r%d" % ((self.max_x - x) / self.max_x * 100))
 
     def handleTopEdge(self, y):
-        print("t%d" % (y))
+        print("t%d" % (y / self.max_y * 100))
 
     def handleBottomEdge(self, y):
-        print("b%d" % (self.max_y - y))
+        print("b%d" % ((self.max_y - y) / self.max_y * 100))
 
 
 def main():
