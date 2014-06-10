@@ -10,7 +10,7 @@ Examples
     ./EdgeSwipeDetect.py | while read line; do
         if [ "$line" = "left" ]; then
             /home/sevanteri/Copy/Workspace/python/pyqt5/tabletShortcuts/run.sh&
-        elif [ "$line" = "right end" ]; then
+        elif [ "$line" = "right" ]; then
             if [ `xsetwacom --get 'Wacom ISDv4 E6 Finger touch' Touch` == "off" ]; then
                 xsetwacom --set 'Wacom ISDv4 E6 Finger touch' Touch on
             else
