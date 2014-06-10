@@ -13,16 +13,17 @@ class EdgeSwipeDetect:
     def __init__(self, argv):
         self.dev = None
         self.running = False
+        self.counter = 0
 
+        self.margin = 2
         self.touching = 0
+        self.handling = ""
 
-        self.last_x = -1
-        self.last_y = -1
+        self.value = -1
+        self.last_value = -1
 
         self.max_x = -1
         self.max_y = -1
-
-        self.handling = ""
 
         for d in evdev.list_devices():
             de = InputDevice(d)
@@ -48,7 +49,7 @@ class EdgeSwipeDetect:
 
         self.running = True
         while self.running:
-            r, w, x = select([self.dev.fd], [], [], 1)
+            r, w, x = select([self.dev.fd], [], [])
             if r:
                 if not self.running:
                     break
@@ -61,29 +62,41 @@ class EdgeSwipeDetect:
                     elif event.code == ecodes.BTN_TOUCH:
                         self.touching = event.value
                         if self.handling and not self.touching:  # oh my
+                            if self.value >= self.last_value \
+                                and self.value > 10:
+                                    print(self.handling)
+                            # else:
+                            #     print(self.handling, "canceled")
+
+                            # print(self.handling, "end")
                             self.handling = ""
-                            print("end")
+                            self.value = -1
+                            self.last_value = -1
+
                     sys.stdout.flush()
 
     def handleXChange(self, x):
-        if x == 0 and not self.handling:
-            print("left")
+        if x <= self.margin and not self.handling:
+            # print("left started")
             self.handling = "left"
-        elif x == self.max_x and not self.handling:
-            print("right")
+        elif x >= self.max_x - self.margin and not self.handling:
+            # print("right started")
             self.handling = "right"
 
         if self.handling == "left":
             self.handleLeftEdge(x)
-        if self.handling == "right":
+        elif self.handling == "right":
             self.handleRightEdge(x)
 
+        if abs(self.last_value - self.value) > 20:
+            self.last_value = self.value
+
     def handleYChange(self, y):
-        if y == 0 and not self.handling:
-            print("top")
+        if y <= self.margin and not self.handling:
+            # print("top started")
             self.handling = "top"
-        elif y == self.max_y and not self.handling:
-            print("bottom")
+        elif y >= self.max_y - self.margin and not self.handling:
+            # print("bottom started")
             self.handling = "bottom"
 
         if self.handling == "top":
@@ -91,17 +104,24 @@ class EdgeSwipeDetect:
         if self.handling == "bottom":
             self.handleBottomEdge(y)
 
+        if abs(self.last_value - self.value) > 20:
+            self.last_value = self.value
+
     def handleLeftEdge(self, x):
-        print("l%d" % (x / self.max_x * 100))
+        self.value = x / self.max_x * 100
+        # print("l%d" % (x / self.max_x * 100))
 
     def handleRightEdge(self, x):
-        print("r%d" % ((self.max_x - x) / self.max_x * 100))
+        self.value = (self.max_x - x) / self.max_x * 100
+        # print("r%d" % ((self.max_x - x) / self.max_x * 100))
 
     def handleTopEdge(self, y):
-        print("t%d" % (y / self.max_y * 100))
+        self.value = y / self.max_y * 100
+        # print("t%d" % (y / self.max_y * 100))
 
     def handleBottomEdge(self, y):
-        print("b%d" % ((self.max_y - y) / self.max_y * 100))
+        self.value = (self.max_y - y) / self.max_y * 100
+        # print("b%d" % ((self.max_y - y) / self.max_y * 100))
 
 
 def main():
