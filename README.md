@@ -4,13 +4,15 @@ EdgeSwipeDetect
 Edge swipe detector for my Lenovo X230T. Uses python-evdev.
 
 
-Examples
-========
+Usage Example
+=============
+
+    #!/bin/sh
 
     ./EdgeSwipeDetect.py | while read line; do
         if [ "$line" = "left" ]; then
             /home/sevanteri/Copy/Workspace/python/pyqt5/tabletShortcuts/run.sh&
-        elif [ "$line" = "right" ]; then
+        elif [ "$line" = "tap_3" ]; then
             if [ `xsetwacom --get 'Wacom ISDv4 E6 Finger touch' Touch` == "off" ]; then
                 xsetwacom --set 'Wacom ISDv4 E6 Finger touch' Touch on
             else
@@ -25,4 +27,4 @@ Examples
 Todo
 ====
 
-Check screen orientation with xrandr
+Check screen orientation
