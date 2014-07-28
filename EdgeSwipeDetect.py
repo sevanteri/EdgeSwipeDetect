@@ -14,6 +14,10 @@ from datetime import datetime
 class EdgeSwipeDetect:
     def __init__(self, argv):
         self.dev = None
+
+        self.ecodesX = ecodes.ABS_MT_POSITION_X
+        self.ecodesY = ecodes.ABS_MT_POSITION_Y
+
         self.running = False
         self.counter = 0
         self.last_tap = -1
@@ -37,10 +41,10 @@ class EdgeSwipeDetect:
         print("device: ", self.dev, file=sys.stderr)
         if self.dev:
             for cap in self.dev.capabilities()[ecodes.EV_ABS]:
-                if cap[0] == ecodes.ABS_MT_POSITION_X:
+                if cap[0] == self.ecodesX:
                     self.min_x = cap[1].min
                     self.max_x = cap[1].max
-                elif cap[0] == ecodes.ABS_MT_POSITION_Y:
+                elif cap[0] == self.ecodesY:
                     self.min_y = cap[1].min
                     self.max_y = cap[1].max
 
@@ -61,9 +65,9 @@ class EdgeSwipeDetect:
                 if not self.running:
                     break
                 for event in self.dev.read():
-                    if event.code == ecodes.ABS_MT_POSITION_X:
+                    if event.code == self.ecodesX:
                         self.handleXChange(event.value)
-                    elif event.code == ecodes.ABS_MT_POSITION_Y:
+                    elif event.code == self.ecodesY:
                         self.handleYChange(event.value)
 
                     elif event.code == ecodes.BTN_TOUCH:
@@ -135,19 +139,19 @@ class EdgeSwipeDetect:
 
     def handleLeftEdge(self, x):
         self.value = x
-        # print("l%d" % (x / self.max_x * 100))
+        # print("l: %d, %d, %d" % (self.min_x, x, self.max_x))
 
     def handleRightEdge(self, x):
         self.value = (self.max_x - x)
-        # print("r%d" % ((self.max_x - x) / self.max_x * 100))
+        # print("r: %d, %d, %d" % (self.min_x, x, self.max_x))
 
     def handleTopEdge(self, y):
         self.value = y
-        # print("t%d" % (y / self.max_y * 100))
+        # print("t: %d, %d, %d" % (self.min_y, y, self.max_y))
 
     def handleBottomEdge(self, y):
         self.value = (self.max_y - y)
-        # print("b%d" % ((self.max_y - y) / self.max_y * 100))
+        # print("b: %d, %d, %d" % (self.min_y, y, self.max_y))
 
 
 def main():

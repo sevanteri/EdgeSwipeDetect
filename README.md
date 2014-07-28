@@ -28,3 +28,11 @@ Todo
 ====
 
 Check screen orientation
+
+Issues
+======
+
+InputDevice's capabilites report a minimum value for an axis, which
+doesn't always seem to be the minimum for some reason.
+Possible solution: profiles for devices where min and max are inputed
+by the user.
