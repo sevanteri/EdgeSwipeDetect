@@ -85,7 +85,6 @@ class EdgeSwipeDetect:
                             self.handling = ""
                             self.value = -1
                             self.last_value = -1
-                            self.dev.ungrab()
 
                         if not self.handling and not self.touching:
                             now = datetime.now().timestamp()
@@ -105,11 +104,9 @@ class EdgeSwipeDetect:
         if x <= self.min_x + self.margin and not self.handling:
             # print("left started")
             self.handling = "left"
-            self.dev.grab()
         elif x >= self.max_x - self.margin and not self.handling:
             # print("right started")
             self.handling = "right"
-            self.dev.grab()
 
         if self.handling == "left":
             self.handleLeftEdge(x)
@@ -123,11 +120,9 @@ class EdgeSwipeDetect:
         if y <= self.min_y + self.margin and not self.handling:
             # print("top started")
             self.handling = "top"
-            self.dev.grab()
         elif y >= self.max_y - self.margin and not self.handling:
             # print("bottom started")
             self.handling = "bottom"
-            self.dev.grab()
 
         if self.handling == "top":
             self.handleTopEdge(y)
