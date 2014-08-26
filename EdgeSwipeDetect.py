@@ -10,10 +10,22 @@ from select import select
 
 from datetime import datetime
 
+from subprocess import Popen, PIPE
+
 
 class EdgeSwipeDetect:
     def __init__(self, argv):
         self.dev = None
+
+        self.edges = ["left", "top", "right", "bottom"]
+        self.gestures = {"left":0,
+                      "top": 1,
+                      "right": 2,
+                      "bottom": 3}
+        self.orientations = {"normal": 0,
+                             "left": 1,
+                             "inverted": 2,
+                             "right": 3}
 
         self.ecodesX = ecodes.ABS_MT_POSITION_X
         self.ecodesY = ecodes.ABS_MT_POSITION_Y
@@ -76,8 +88,14 @@ class EdgeSwipeDetect:
                         if self.handling and not self.touching:  # oh my
                             if self.value >= self.last_value \
                                 and self.value > self.min_xy * 0.1:
+                                    orientation = self.getScreenOrientation()
 
-                                    print(self.handling)
+                                    edgeSwiped = self.gestures[self.handling]
+                                    rotatedEdge = self.edges[
+                                            (edgeSwiped + orientation) % 4
+                                        ]
+
+                                    print(rotatedEdge)
                             # else:
                             #     print(self.handling, "canceled")
 
@@ -148,6 +166,15 @@ class EdgeSwipeDetect:
         self.value = (self.max_y - y)
         # print("b: %d, %d, %d" % (self.min_y, y, self.max_y))
 
+    def getScreenOrientation(self):
+        # xrandr --current --verbose | grep "LVDS1 connected" | awk '{print $5}'
+
+        output = Popen("xrandr --current --verbose | grep 'LVDS1 connected' | awk '{print $5}'",
+            shell=True, stdout=PIPE).communicate()[0].decode('UTF-8')[:-1]
+
+        orientation = orientation = self.orientations[output]
+
+        return orientation
 
 def main():
     return EdgeSwipeDetect(sys.argv).run()

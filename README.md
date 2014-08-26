@@ -20,6 +20,9 @@ Usage Example
             fi
         elif [ "$line" = "bottom" ]; then
             xdotool keydown alt key Tab keyup alt
+
+        elif [ "$line" = "top" ]; then
+            xset dpms force off #blank screen
         fi
     done
 
@@ -27,7 +30,7 @@ Usage Example
 Todo
 ====
 
-Check screen orientation
+Clean up a bit
 
 Issues
 ======
