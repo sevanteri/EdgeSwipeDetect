@@ -87,7 +87,7 @@ class EdgeSwipeDetect:
                         self.touching = event.value
                         if self.handling and not self.touching:  # oh my
                             if self.value >= self.last_value \
-                                and self.value > self.min_xy * 0.1:
+                                and self.value > self.min_xy * 0.05:
                                     orientation = self.getScreenOrientation()
 
                                     edgeSwiped = self.gestures[self.handling]
@@ -131,7 +131,7 @@ class EdgeSwipeDetect:
         elif self.handling == "right":
             self.handleRightEdge(x)
 
-        if abs(self.last_value - self.value) > self.min_xy * 0.2:
+        if abs(self.last_value - self.value) > self.min_xy * 0.1:
             self.last_value = self.value
 
     def handleYChange(self, y):
@@ -147,7 +147,7 @@ class EdgeSwipeDetect:
         if self.handling == "bottom":
             self.handleBottomEdge(y)
 
-        if abs(self.last_value - self.value) > self.min_xy * 0.2:
+        if abs(self.last_value - self.value) > self.min_xy * 0.1:
             self.last_value = self.value
 
     def handleLeftEdge(self, x):
@@ -169,7 +169,7 @@ class EdgeSwipeDetect:
     def getScreenOrientation(self):
         # xrandr --current --verbose | grep "LVDS1 connected" | awk '{print $5}'
 
-        output = Popen("xrandr --current --verbose | grep 'LVDS1 connected' | awk '{print $5}'",
+        output = Popen("xrandr --current --verbose | grep 'LVDS1 connected' | awk '{print $6}'",
             shell=True, stdout=PIPE).communicate()[0].decode('UTF-8')[:-1]
 
         orientation = orientation = self.orientations[output]
