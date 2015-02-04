@@ -3,6 +3,8 @@
 
 import sys
 
+import configparser
+
 import evdev
 from evdev import ecodes
 from evdev.device import InputDevice
@@ -14,18 +16,20 @@ from subprocess import Popen, PIPE
 
 
 class EdgeSwipeDetect:
-    def __init__(self, argv):
+    def __init__(self, argv, config=dict()):
         self.dev = None
 
         self.edges = ["left", "top", "right", "bottom"]
         self.gestures = {"left":0,
-                      "top": 1,
-                      "right": 2,
-                      "bottom": 3}
+                         "top": 1,
+                         "right": 2,
+                         "bottom": 3}
         self.orientations = {"normal": 0,
                              "left": 1,
                              "inverted": 2,
                              "right": 3}
+
+        self.checkOrientation = bool(config.get('checkOrientation', True))
 
         self.ecodesX = ecodes.ABS_MT_POSITION_X
         self.ecodesY = ecodes.ABS_MT_POSITION_Y
@@ -34,7 +38,7 @@ class EdgeSwipeDetect:
         self.counter = 0
         self.last_tap = -1
 
-        self.margin = 2
+        self.margin = int(config.get('margin', 2))
         self.touching = 0
         self.handling = ""
 
@@ -43,9 +47,14 @@ class EdgeSwipeDetect:
 
         self.min_x = self.min_y = self.max_x = self.max_y = self.min_xy = -1
 
+        self.deviceName = config.get('deviceName', None)
+
+        searchTerm = ((self.deviceName is not None and self.deviceName) or
+                      (len(argv) > 1 and argv[1] or "finger")
+                      )
+
         for d in evdev.list_devices():
             de = InputDevice(d)
-            searchTerm = len(argv) > 1 and argv[1] or "finger"
             if de.name.lower().rfind(searchTerm.lower()) > 0:
                 self.dev = de
                 break
@@ -54,11 +63,11 @@ class EdgeSwipeDetect:
         if self.dev:
             for cap in self.dev.capabilities()[ecodes.EV_ABS]:
                 if cap[0] == self.ecodesX:
-                    self.min_x = cap[1].min
-                    self.max_x = cap[1].max
+                    self.min_x = int(config.get('min_x', cap[1].min))
+                    self.max_x = int(config.get('max_x', cap[1].max))
                 elif cap[0] == self.ecodesY:
-                    self.min_y = cap[1].min
-                    self.max_y = cap[1].max
+                    self.min_y = int(config.get('min_y', cap[1].min))
+                    self.max_y = int(config.get('max_y', cap[1].max))
 
             self.min_xy = min(self.max_y - self.min_y, self.max_x - self.min_x)
             print("min x: ", self.min_x, file=sys.stderr)
@@ -86,9 +95,10 @@ class EdgeSwipeDetect:
 
                         self.touching = event.value
                         if self.handling and not self.touching:  # oh my
-                            if self.value >= self.last_value \
-                                and self.value > self.min_xy * 0.05:
-                                    orientation = self.getScreenOrientation()
+                            if (self.value > self.last_value
+                                and self.value > self.min_xy * 0.05):
+                                    orientation = (self.checkOrientation and
+                                        self.getScreenOrientation() or 0)
 
                                     edgeSwiped = self.gestures[self.handling]
                                     rotatedEdge = self.edges[
@@ -135,8 +145,9 @@ class EdgeSwipeDetect:
             self.last_value = self.value
 
     def handleYChange(self, y):
+        #print(y, self.min_y + self.margin, self.max_y - self.margin)
         if y <= self.min_y + self.margin and not self.handling:
-            # print("top started")
+            #print("top started")
             self.handling = "top"
         elif y >= self.max_y - self.margin and not self.handling:
             # print("bottom started")
@@ -177,6 +188,12 @@ class EdgeSwipeDetect:
         return orientation
 
 def main():
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    if len(sys.argv) > 1:
+        # check if first argument is in config
+        if sys.argv[1] in config:
+            return EdgeSwipeDetect(sys.argv, config=config[sys.argv[1]]).run()
     return EdgeSwipeDetect(sys.argv).run()
 
 if __name__ == '__main__':
